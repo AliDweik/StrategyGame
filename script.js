@@ -119,7 +119,7 @@
     // ========== PHASE 1: Setup (unlimited rows/cols) ==========
     function renderPhase1() {
         phaseContent.innerHTML = `
-            <div class="pane-title">🎯 mission parameters</div>
+            <div class="pane-title">🎯 Game Design</div>
             <div class="input-group">
                 <div class="input-field">
                     <label>⚔️ SQUADS (2–10)</label>
@@ -166,18 +166,18 @@
         for (let i = 0; i < groupsCount; i++) {
             namesHtml += `
                 <div class="name-item">
-                    <label>SQUAD ${i+1} CALLSIGN</label>
+                    <label>SQUAD ${i+1}</label>
                     <input type="text" id="groupName${i}" value="${groupNames[i]}" placeholder="e.g., Phantom">
                 </div>
             `;
         }
         
         phaseContent.innerHTML = `
-            <div class="pane-title">📡 assign squad callsigns</div>
+            <div class="pane-title">📡 Assign Squads </div>
             <div class="groups-names">${namesHtml}</div>
             <div class="nav-buttons">
                 <button class="secondary" id="phase2Back">← BACK</button>
-                <button id="phase2Next">DEPLOY →</button>
+                <button id="phase2Next">NEXT →</button>
             </div>
         `;
         
@@ -244,14 +244,14 @@
         `;
         
         phaseContent.innerHTML = `
-            <div class="pane-title">💣 strategic deployment (drag & drop)</div>
+            <div class="pane-title">💣 Strategic Plannig (drag & drop)</div>
             <div class="inventory" id="inventoryTokens">
                 ${inventoryHtml}
             </div>
             <div class="dashboard">${boardsHtml}</div>
             <div class="nav-buttons">
                 <button class="secondary" id="phase3Back">← BACK</button>
-                <button id="phase3Next">COMMENCE RECON →</button>
+                <button id="phase3Next">Fight →</button>
             </div>
         `;
         
@@ -328,7 +328,7 @@
             
             boardsHtml += `
                 <div class="group-board">
-                    <div class="group-title">🎯 ${group.name} · hidden positions</div>
+                    <div class="group-title">🎯 ${group.name} </div>
                     <div class="grid-table" style="grid-template-columns: repeat(${cols}, minmax(55px, 75px));">${gridHtml}</div>
                     <div class="totals-row">${totalsHtml}</div>
                 </div>
@@ -336,10 +336,10 @@
         }
         
         phaseContent.innerHTML = `
-            <div class="pane-title">📡 reconnaissance dashboard · intelligence revealed</div>
+            <div class="pane-title">📡 Dashboard </div>
             <div class="dashboard">${boardsHtml}</div>
             <div class="nav-buttons">
-                <button class="secondary" id="phase4Back">← REDEPLOY</button>
+                <button class="secondary" id="phase4Back">← BACK</button>
                 <div></div>
             </div>
         `;

@@ -2,13 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STRIKE ZONE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>STRIKE ZONE - Bombing Mission</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="game-container" id="gameContainer">
-    <h1>🏆 STRIKE ZONE</h1>
+<div class="start-screen" id="startScreen">
+    <div class="start-content">
+        <button class="start-button" id="startButton">START MISSION</button>
+    </div>
+</div>
+
+<div class="game-container" id="gameContainer" style="display: none;">
+    <h1>💣 STRIKE ZONE </h1>
 
     <div class="phase-indicator" id="phaseIndicator">
         <span class="phase-step" id="phase1Step">1 · Setup</span>

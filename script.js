@@ -1,16 +1,19 @@
 (function () {
+    // ========== STORAGE KEY ==========
+    const STORAGE_KEY = 'almuhandis_game_state_v1';
+
     // ========== DYNAMIC TOKENS CONFIGURATION ==========
 
     const TOKENS = [
-        { id: 'battalion', name: 'Battalion', icon: '🏰', color: '#c9b68a', borderColor: '#9b6e3a' },
-        { id: 'fighter-jet', name: 'Fighter Jet', icon: '✈️', color: '#b8d0e0', borderColor: '#5a7c9a' },
-        { id: 'soldier', name: 'Soldier', icon: '⚔️', color: '#9ebd8a', borderColor: '#4a6e2a' },
-        { id: 'tank', name: 'Tank', icon: '⛴', color: '#e6c8a8', borderColor: '#b86a2a' },
-        { id: 'commander', name: 'Commander', icon: '👨🏼‍✈️', color: '#766552', borderColor: '#6f411c' },
-        { id: 'secret-headquarters', name: 'Secret Headquarters', icon: '🛕', color: '#b8a2c0', borderColor: '#6a4a7a' }
+        { id: 'battalion', name: 'كتيبة', icon: '🏰', color: '#c9b68a', borderColor: '#9b6e3a' },
+        { id: 'fighter-jet', name: 'طائرة', icon: '✈️', color: '#b8d0e0', borderColor: '#5a7c9a' },
+        { id: 'soldier', name: 'جندي', icon: '⚔️', color: '#9ebd8a', borderColor: '#4a6e2a' },
+        { id: 'tank', name: 'دبابة', icon: '⛴', color: '#e6c8a8', borderColor: '#b86a2a' },
+        { id: 'commander', name: 'قائد', icon: '👨🏼‍✈️', color: '#766552', borderColor: '#6f411c' },
+        { id: 'secret-headquarters', name: 'مقر سري', icon: '🛕', color: '#b8a2c0', borderColor: '#6a4a7a' }
     ];
 
-    const EMPTY_TOKEN = { id: 'empty', name: 'Empty', icon: '▢', color: '#dbd4c0', borderColor: '#9e8e6a' };
+    const EMPTY_TOKEN = { id: 'empty', name: 'فارغ', icon: '▢', color: '#dbd4c0', borderColor: '#9e8e6a' };
 
     // ========== AUDIO CONFIGURATION ==========
     let bombSound = null;
@@ -57,10 +60,84 @@
     let phase = 1;
     let groupsCount = 2;
     let rows = 3, cols = 3;
-    let groupNames = ['Squad 1', 'Squad 2'];
+    let groupNames = ['فريق ١', 'فريق ٢'];
     let groupsData = [];
     let revealedState = [];
     let isProcessing = false;
+    let gameStarted = false;
+
+    // ========== STORAGE FUNCTIONS ==========
+    function saveState() {
+        try {
+            const state = {
+                phase,
+                groupsCount,
+                rows,
+                cols,
+                groupNames,
+                groupsData,
+                revealedState,
+                gameStarted
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+            console.log('Failed to save state:', e);
+        }
+    }
+
+    function loadState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return false;
+            const state = JSON.parse(raw);
+            if (!state || typeof state !== 'object') return false;
+            if (typeof state.phase !== 'number') return false;
+
+            phase = state.phase;
+            groupsCount = state.groupsCount ?? 2;
+            rows = state.rows ?? 3;
+            cols = state.cols ?? 3;
+            groupNames = Array.isArray(state.groupNames) ? state.groupNames : ['فريق ١', 'فريق ٢'];
+            groupsData = Array.isArray(state.groupsData) ? state.groupsData : [];
+            revealedState = Array.isArray(state.revealedState) ? state.revealedState : [];
+            gameStarted = !!state.gameStarted;
+
+            // Validate groupsData shape
+            if (groupsData.length !== groupsCount || !groupsData.every(g => Array.isArray(g.grid))) {
+                buildEmptyGroups();
+            }
+            // Validate revealedState shape
+            if (revealedState.length !== groupsCount || !revealedState.every(r => Array.isArray(r))) {
+                resetRevealed();
+            }
+            return true;
+        } catch (e) {
+            console.log('Failed to load state:', e);
+            return false;
+        }
+    }
+
+    function clearState() {
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+        } catch (e) {
+            console.log('Failed to clear state:', e);
+        }
+    }
+
+    function resetGame() {
+        phase = 1;
+        groupsCount = 2;
+        rows = 3;
+        cols = 3;
+        groupNames = ['فريق ١', 'فريق ٢'];
+        groupsData = [];
+        revealedState = [];
+        isProcessing = false;
+        buildEmptyGroups();
+        resetRevealed();
+        saveState();
+    }
     
     function getRowLetter(rowIndex) {
         return String.fromCharCode(65 + rowIndex);
@@ -73,7 +150,7 @@
             for (let r = 0; r < rows; r++) {
                 grid.push(Array(cols).fill(''));
             }
-            groupsData.push({ name: groupNames[g] || `Group ${g+1}`, grid });
+            groupsData.push({ name: groupNames[g] || `مجموعة ${g+1}`, grid });
         }
     }
     
@@ -212,7 +289,7 @@
         let resultsHtml = `
             <div class="results-modal" id="resultsModal">
                 <div class="results-content">
-                    <h2>💣 BOMBING RESULTS 💣</h2>
+                    <h2>💣 نتائج القصف 💣</h2>
         `;
         
         hits.forEach(squad => {
@@ -240,7 +317,7 @@
         });
         
         resultsHtml += `
-                    <button class="close-results" id="closeResults">CLOSE</button>
+                    <button class="close-results" id="closeResults">إغلاق</button>
                 </div>
             </div>
         `;
@@ -257,6 +334,7 @@
     const startScreen = document.getElementById('startScreen');
     const gameContainer = document.getElementById('gameContainer');
     const startButton = document.getElementById('startButton');
+    const newGameButton = document.getElementById('newGameButton');
     const phase1Step = document.getElementById('phase1Step');
     const phase2Step = document.getElementById('phase2Step');
     const phase3Step = document.getElementById('phase3Step');
@@ -264,6 +342,18 @@
     const phaseContent = document.getElementById('phaseContent');
     
     startButton.addEventListener('click', () => {
+        startScreen.style.display = 'none';
+        gameContainer.style.display = 'block';
+        gameStarted = true;
+        saveState();
+        render();
+    });
+
+    newGameButton.addEventListener('click', () => {
+        if (!confirm('هل أنت متأكد من بدء لعبة جديدة؟ سيتم مسح التقدم الحالي.')) return;
+        clearState();
+        resetGame();
+        gameStarted = true;
         startScreen.style.display = 'none';
         gameContainer.style.display = 'block';
         render();
@@ -282,29 +372,30 @@
         else if (phase === 2) renderPhase2();
         else if (phase === 3) renderPhase3();
         else if (phase === 4) renderPhase4();
+        saveState();
     }
     
     // ========== PHASE 1 ==========
     function renderPhase1() {
         phaseContent.innerHTML = `
-            <div class="pane-title">🎯 Mission Setup</div>
+            <div class="pane-title">🎯 إعداد المهمة</div>
             <div class="input-group">
                 <div class="input-field">
-                    <label>⚔️ SQUADS (2–10)</label>
+                    <label>⚔️ الفرق (٢–١٠)</label>
                     <input type="number" id="groupsCountInput" min="2" max="10" value="${groupsCount}">
                 </div>
                 <div class="input-field">
-                    <label>🗺️ ROWS (N)</label>
+                    <label>🗺️ الصفوف (ن)</label>
                     <input type="number" id="rowsInput" min="1" max="20" value="${rows}">
                 </div>
                 <div class="input-field">
-                    <label>🗺️ COLUMNS (M)</label>
+                    <label>🗺️ الأعمدة (م)</label>
                     <input type="number" id="colsInput" min="1" max="20" value="${cols}">
                 </div>
             </div>
             <div class="nav-buttons">
                 <div></div>
-                <button id="phase1Next">NEXT →</button>
+                <button id="phase1Next">التالي ←</button>
             </div>
         `;
         
@@ -317,13 +408,13 @@
                 groupsCount = newGroups;
                 rows = newRows;
                 cols = newCols;
-                while (groupNames.length < groupsCount) groupNames.push(`Squad ${groupNames.length+1}`);
+                while (groupNames.length < groupsCount) groupNames.push(`فريق ${groupNames.length+1}`);
                 while (groupNames.length > groupsCount) groupNames.pop();
                 buildEmptyGroups();
                 phase = 2;
                 render();
             } else {
-                alert('Valid range: Squads 2-10, Rows/Cols 1-20');
+                alert('النطاق الصحيح: الفرق ٢-١٠، الصفوف/الأعمدة ١-٢٠');
             }
         });
     }
@@ -334,18 +425,18 @@
         for (let i = 0; i < groupsCount; i++) {
             namesHtml += `
                 <div class="name-item">
-                    <label>SQUAD ${i+1}</label>
-                    <input type="text" id="groupName${i}" value="${groupNames[i]}" placeholder="e.g., Phantom">
+                    <label>الفريق ${i+1}</label>
+                    <input type="text" id="groupName${i}" value="${groupNames[i]}" placeholder="مثال: الشبح">
                 </div>
             `;
         }
         
         phaseContent.innerHTML = `
-            <div class="pane-title">📡 Assign Squad Names</div>
+            <div class="pane-title">📡 تعيين أسماء الفرق</div>
             <div class="groups-names">${namesHtml}</div>
             <div class="nav-buttons">
-                <button class="secondary" id="phase2Back">← BACK</button>
-                <button id="phase2Next">NEXT →</button>
+                <button class="secondary" id="phase2Back">→ رجوع</button>
+                <button id="phase2Next">التالي ←</button>
             </div>
         `;
         
@@ -353,7 +444,7 @@
         document.getElementById('phase2Next').addEventListener('click', () => {
             for (let i = 0; i < groupsCount; i++) {
                 const inp = document.getElementById(`groupName${i}`);
-                if (inp) groupNames[i] = inp.value.trim() || `Squad ${i+1}`;
+                if (inp) groupNames[i] = inp.value.trim() || `فريق ${i+1}`;
             }
             buildEmptyGroups();
             phase = 3;
@@ -417,17 +508,17 @@
         });
         inventoryHtml += `
             <div class="token empty-token" draggable="true" data-type="empty">
-                🗑️ CLEAR
+                🗑️ مسح
             </div>
         `;
         
         phaseContent.innerHTML = `
-            <div class="pane-title">💣 Strategic Planning</div>
+            <div class="pane-title">💣 التخطيط الاستراتيجي</div>
             <div class="inventory" id="inventoryTokens">${inventoryHtml}</div>
             <div class="dashboard">${boardsHtml}</div>
             <div class="nav-buttons">
-                <button class="secondary" id="phase3Back">← BACK</button>
-                <button id="phase3Next">FIGHT →</button>
+                <button class="secondary" id="phase3Back">→ رجوع</button>
+                <button id="phase3Next">قتال ←</button>
             </div>
         `;
         
@@ -449,6 +540,7 @@
                 const c = parseInt(cell.dataset.col, 10);
                 groupsData[g].grid[r][c] = tokenType === 'empty' ? '' : tokenType;
                 renderPhase3();
+                saveState();
             });
         });
         
@@ -521,11 +613,11 @@
         }
         
         phaseContent.innerHTML = `
-            <div class="pane-title">💣 WAR ZONE</div>
+            <div class="pane-title">💣 منطقة الحرب</div>
             <div class="dashboard">${boardsHtml}</div>
             <div class="nav-buttons">
-                <button class="secondary" id="phase4Back">← BACK</button>
-                <button id="showResultsBtn">📊 SHOW RESULTS</button>
+                <button class="secondary" id="phase4Back">→ رجوع</button>
+                <button id="showResultsBtn">📊 عرض النتائج</button>
             </div>
         `;
         
@@ -546,6 +638,7 @@
                 await animateBomb(cell, hasContent);
                 revealedState[g][r][c] = true;
                 renderPhase4();
+                saveState();
                 isProcessing = false;
             });
         });
@@ -577,4 +670,19 @@
     
     document.addEventListener('click', unlockAudio);
     document.addEventListener('touchstart', unlockAudio);
+
+    // ========== INIT: RESTORE STATE ON LOAD ==========
+    (function init() {
+        const restored = loadState();
+        if (restored && gameStarted) {
+            // Skip start screen and jump right into the game
+            startScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+            render();
+        } else {
+            // Fresh start — ensure a clean initial state
+            resetGame();
+            // Keep start screen visible until user clicks "ابدأ المهمة"
+        }
+    })();
 })();

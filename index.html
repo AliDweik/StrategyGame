@@ -1,26 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>STRIKE ZONE - Bombing Mission</title>
+    <title>المهندس - مهمة القصف</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="start-screen" id="startScreen">
     <div class="start-content">
-        <button class="start-button" id="startButton">START MISSION</button>
+        <button class="start-button" id="startButton">ابدأ المهمة</button>
     </div>
 </div>
 
 <div class="game-container" id="gameContainer" style="display: none;">
-    <h1>💣 STRIKE ZONE </h1>
+    <div class="top-bar">
+        <h1>💣 المهندس</h1>
+        <button class="new-game-button" id="newGameButton">🔄 لعبة جديدة</button>
+    </div>
 
     <div class="phase-indicator" id="phaseIndicator">
-        <span class="phase-step" id="phase1Step">1 · Setup</span>
-        <span class="phase-step" id="phase2Step">2 · Names</span>
-        <span class="phase-step" id="phase3Step">3 · Arrange</span>
-        <span class="phase-step" id="phase4Step">4 · War Zone</span>
+        <span class="phase-step" id="phase1Step">١ · الإعداد</span>
+        <span class="phase-step" id="phase2Step">٢ · الأسماء</span>
+        <span class="phase-step" id="phase3Step">٣ · الترتيب</span>
+        <span class="phase-step" id="phase4Step">٤ · منطقة الحرب</span>
     </div>
 
     <div id="phaseContent" class="phase-pane"></div>
